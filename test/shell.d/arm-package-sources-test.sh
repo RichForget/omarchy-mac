@@ -34,7 +34,13 @@ cmp -s "$test_tmp/original-backup" "$test_tmp/pacman.conf.bak" || fail 'channel 
 pass 'preparation after channel replacement preserves the original backup'
 
 mapfile -t targets < <(omarchy_arm_package_targets)
-[[ ${targets[*]} == "omarchy/hyprland omarchy/hyprtoolkit omarchy/hyprland-guiutils" ]] || fail 'only approved packages selected'
+(( ${#targets[@]} == 3 )) || fail 'only approved packages selected'
+[[ ${targets[0]} == "omarchy/hyprland" ]] || fail 'hyprland stays on the Omarchy edge repository'
+for package in hyprtoolkit hyprland-guiutils; do
+  # The aarch64 edge repository may omit these; then they resolve from [extra].
+  [[ " ${targets[*]} " == *" omarchy/$package "* || " ${targets[*]} " == *" $package "* ]] ||
+    fail "$package is selected from a repository that carries it"
+done
 pass 'Aquamarine remains a regular-repository dependency'
 
 # Exercise the real default-package loop after the compatibility transaction.

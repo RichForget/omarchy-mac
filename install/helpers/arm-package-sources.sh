@@ -2,7 +2,21 @@
 
 # Shared by the standalone installer and installed package update commands.
 omarchy_arm_package_targets() {
-  printf '%s\n' omarchy/hyprland omarchy/hyprtoolkit omarchy/hyprland-guiutils
+  # The aarch64 Omarchy edge repository currently publishes hyprland but not
+  # hyprtoolkit or hyprland-guiutils. Both are available in Arch Linux ARM's
+  # [extra] repository, so leave them unqualified and let pacman take them
+  # from there instead of failing the whole transaction with "target not
+  # found" on omarchy/hyprtoolkit and omarchy/hyprland-guiutils.
+  local available package
+  available=$(pacman --config "${OMARCHY_PACMAN_CONFIG:-/etc/pacman.conf}" -Slq omarchy 2>/dev/null || true)
+  echo omarchy/hyprland
+  for package in hyprtoolkit hyprland-guiutils; do
+    if grep -qx "$package" <<<"$available"; then
+      echo "omarchy/$package"
+    else
+      echo "$package"
+    fi
+  done
 }
 
 # --needed drops unchanged explicit targets before sysupgrade considers the
